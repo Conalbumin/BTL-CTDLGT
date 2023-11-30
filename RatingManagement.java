@@ -46,9 +46,12 @@ public class RatingManagement {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 String[] data = line.split(",");
+
                 int movieId = Integer.parseInt(data[0]);
                 String movieName = data[1];
-                ArrayList<String> genres = new ArrayList<>(Arrays.asList(data[2].split(",")));
+                String genresString = data[2].replace("-", ",");
+
+                ArrayList<String> genres = new ArrayList<>(Arrays.asList(genresString.split(",")));
                 // Add other movie attributes as needed
                 movieList.add(new Movie(movieId, movieName, genres));
             }
@@ -112,23 +115,73 @@ public class RatingManagement {
                 }
             }
         }
-    
+
         // Sort the result alphabetically by movie name
         result.sort(Comparator.comparing(Movie::getName));
-    
+
         return result;
     }
 
     // Requirement 3
     public ArrayList<User> findUsersHavingSameRatingWithUser(int userId, int movieId) {
-        /* code here */
-        return null; /* change here */
+        ArrayList<User> result = new ArrayList<>();
+
+        // Find the rating given by the user with userId for the specified movieId
+        int userRating = -1;
+        for (Rating r : ratings) {
+            if (r.getViewerId() == userId && r.getMovieId() == movieId) {
+                userRating = r.getRatingStar();
+                break;
+            }
+        }
+
+        // If userRating is -1, it means the user hasn't rated the specified movieId
+        if (userRating != -1) {
+            // Find users who rated the same movie with the same number of stars
+            for (Rating r : ratings) {
+                if (r.getMovieId() == movieId && r.getRatingStar() == userRating && r.getViewerId() != userId) {
+                    int viewerId = r.getViewerId();
+                    // Find the user with the corresponding viewerId
+                    for (User user : users) {
+                        if (user.getId() == viewerId) {
+                            result.add(user);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     // Requirement 4
     public ArrayList<String> findMoviesNameHavingSameReputation() {
-        /* code here */
-        return null; /* change here */
+        ArrayList<String> result = new ArrayList<>();
+
+        // Count the number of ratings greater than 3 for each movie
+        Map<Integer, Integer> movieRatingCount = new HashMap<>();
+        for (Rating r : ratings) {
+            if (r.getRatingStar() > 3) {
+                movieRatingCount.put(r.getMovieId(), movieRatingCount.getOrDefault(r.getMovieId(), 0) + 1);
+            }
+        }
+
+        // Collect movies with at least two favorable ratings
+        for (Map.Entry<Integer, Integer> entry : movieRatingCount.entrySet()) {
+            if (entry.getValue() >= 2) {
+                int movieId = entry.getKey();
+                // Find the movie with the corresponding movieId
+                for (Movie movie : movies) {
+                    if (movie.getId() == movieId) {
+                        result.add(movie.getName());
+                        break;
+                    }
+                }
+            }
+        }
+        // Sort the result alphabetically
+        result.sort(Comparator.naturalOrder());
+        return result;
     }
 
     // @Requirement 5

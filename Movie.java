@@ -33,7 +33,9 @@ public class Movie {
 
     @Override
     public String toString() {
-        return String.format("Movie[%d, %s, %s]", id, name, genres);
+        // Join genres with commas and space, and enclose them in square brackets
+        String genresString = "[" + String.join(", ", genres) + "]";
+        return String.format("Movie[%d, %s, %s]", id, name, genresString);
     }
 
 }
