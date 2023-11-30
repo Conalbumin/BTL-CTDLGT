@@ -185,19 +185,74 @@ public class RatingManagement {
     }
 
     // @Requirement 5
+    // tra ve danh sach chua
+    // ten cua toi da k bo phim ma ng dung co cung occupation va gender da
+    // danh gia cung mot diem so
+    // ket qua phai dc sap xep theo alphabetically
     public ArrayList<String> findMoviesMatchOccupationAndGender(String occupation, String gender, int k,
             int rating) {
-        /* code here */
-        return null; /* change here */
+        ArrayList<String> result = new ArrayList<>();
+
+        // Find users with the same occupation and gender
+        ArrayList<Integer> matchingUserIds = new ArrayList<>();
+        for (User user : users) {
+            if (user.getOccupation().equalsIgnoreCase(occupation) && user.getGender().equalsIgnoreCase(gender)) {
+                matchingUserIds.add(user.getId());
+            }
+        }
+
+        // Count the number of ratings for each movie by users with the same occupation
+        // and gender
+        Map<Integer, Integer> movieRatingCount = new HashMap<>();
+        for (Rating r : ratings) {
+            if (matchingUserIds.contains(r.getViewerId()) && r.getRatingStar() == rating) {
+                movieRatingCount.put(r.getMovieId(), movieRatingCount.getOrDefault(r.getMovieId(), 0) + 1);
+            }
+        }
+        // Collect up to k movies with the highest ratings
+        List<Map.Entry<Integer, Integer>> sortedMovies = new ArrayList<>(movieRatingCount.entrySet());
+        sortedMovies.sort((entry1, entry2) -> entry2.getValue().compareTo(entry1.getValue()));
+
+        int count = 0;
+        for (Map.Entry<Integer, Integer> entry : sortedMovies) {
+            if (count >= k) {
+                break; // Exit loop after collecting k movies
+            }
+            int movieId = entry.getKey();
+            // Find the movie with the corresponding movieId
+            for (Movie movie : movies) {
+                if (movie.getId() == movieId) {
+                    result.add(movie.getName());
+                    count++;
+                    break;
+                }
+            }
+        }
+
+        // Sort the result alphabetically
+        result.sort(Comparator.naturalOrder());
+
+        return result;
     }
 
     // @Requirement 6
+    // tra ve danh sach chua
+    // toi da k movie titles dc ng xem cung occupation
+    // danh gia thap hon diem danh gia
+    // ket qua phai dc sap xep theo alphabetically
     public ArrayList<String> findMoviesByOccupationAndLessThanRating(String occupation, int k, int rating) {
         /* code here */
         return null; /* change here */
     }
 
     // @Requirement 7
+    // tra ve danh sach chua
+    // toi da k movie titles dc ng xem cung gender va
+    // ng xem co userId danh gia >= rating
+    // va nhung movies nay share it nhat 1 the loai voi bo phim cuoi cung
+    // dc ng dung voi userId danh gia
+    // (thoi gian cuoi cung dc xem xet theo thuoc tinh timestamp)
+    // ma diem danh gia cua no >= rating
     public ArrayList<String> findMoviesMatchLatestMovieOf(int userId, int rating, int k) {
         /* code here */
         return null; /* change here */
