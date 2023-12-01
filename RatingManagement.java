@@ -15,7 +15,7 @@ public class RatingManagement {
     private ArrayList<Rating> loadEdgeList(String ratingPath) {
         ArrayList<Rating> edgeList = new ArrayList<>();
         try (Scanner scanner = new Scanner(ClassLoader.getSystemResourceAsStream(ratingPath))) {
-            // Skip the header if it exists
+            // Skip the header
             if (scanner.hasNextLine()) {
                 scanner.nextLine();
             }
@@ -27,6 +27,7 @@ public class RatingManagement {
                 int movieId = Integer.parseInt(data[1]);
                 int rating = Integer.parseInt(data[2]);
                 int timestamp = Integer.parseInt(data[3]);
+
                 edgeList.add(new Rating(userId, movieId, rating, timestamp));
             }
         } catch (Exception e) {
@@ -38,7 +39,7 @@ public class RatingManagement {
     private ArrayList<Movie> loadMovies(String moviePath) {
         ArrayList<Movie> movieList = new ArrayList<>();
         try (Scanner scanner = new Scanner(ClassLoader.getSystemResourceAsStream(moviePath))) {
-            // Skip the header if it exists
+            // Skip the header
             if (scanner.hasNextLine()) {
                 scanner.nextLine();
             }
@@ -49,10 +50,10 @@ public class RatingManagement {
 
                 int movieId = Integer.parseInt(data[0]);
                 String movieName = data[1];
+                // nhieu genres trong cung 1 phim dc phan ra bang - nen thay cho dung yeu cau
                 String genresString = data[2].replace("-", ",");
-
                 ArrayList<String> genres = new ArrayList<>(Arrays.asList(genresString.split(",")));
-                // Add other movie attributes as needed
+
                 movieList.add(new Movie(movieId, movieName, genres));
             }
         } catch (Exception e) {
@@ -78,7 +79,7 @@ public class RatingManagement {
                 int age = Integer.parseInt(data[2]);
                 String occupation = data[3];
                 String zipCode = data[4];
-                // Add other user attributes as needed
+
                 userList.add(new User(userId, gender, age, occupation, zipCode));
             }
         } catch (Exception e) {
@@ -102,11 +103,9 @@ public class RatingManagement {
     // @Requirement 2
     public ArrayList<Movie> findMoviesByNameAndMatchRating(int userId, int rating) {
         ArrayList<Movie> result = new ArrayList<>();
-
         for (Rating r : ratings) {
             if (r.getViewerId() == userId && r.getRatingStar() >= rating) {
                 int movieId = r.getMovieId();
-                // Find the movie with the corresponding movieId
                 for (Movie movie : movies) {
                     if (movie.getId() == movieId) {
                         result.add(movie);
@@ -115,10 +114,7 @@ public class RatingManagement {
                 }
             }
         }
-
-        // Sort the result alphabetically by movie name
-        result.sort(Comparator.comparing(Movie::getName));
-
+        result.sort(Comparator.comparing((Movie movie) -> movie.getName()));
         return result;
     }
 
@@ -139,9 +135,10 @@ public class RatingManagement {
         if (userRating != -1) {
             // Find users who rated the same movie with the same number of stars
             for (Rating r : ratings) {
-                if (r.getMovieId() == movieId && r.getRatingStar() == userRating && r.getViewerId() != userId) {
+                if (r.getMovieId() == movieId &&
+                        r.getRatingStar() == userRating &&
+                        r.getViewerId() != userId) {
                     int viewerId = r.getViewerId();
-                    // Find the user with the corresponding viewerId
                     for (User user : users) {
                         if (user.getId() == viewerId) {
                             result.add(user);
@@ -158,7 +155,8 @@ public class RatingManagement {
     public ArrayList<String> findMoviesNameHavingSameReputation() {
         ArrayList<String> result = new ArrayList<>();
 
-        // Count the number of ratings greater than 3 for each movie
+        // Count the number of ratings greater than 3 for each movie (favored)
+        // dung Map de tim kiem cac key (hieu qua hon ArrayList)
         Map<Integer, Integer> movieRatingCount = new HashMap<>();
         for (Rating r : ratings) {
             if (r.getRatingStar() > 3) {
@@ -179,7 +177,6 @@ public class RatingManagement {
                 }
             }
         }
-        // Sort the result alphabetically
         result.sort(Comparator.naturalOrder());
         return result;
     }
@@ -228,10 +225,7 @@ public class RatingManagement {
                 }
             }
         }
-
-        // Sort the result alphabetically
         result.sort(Comparator.naturalOrder());
-
         return result;
     }
 
