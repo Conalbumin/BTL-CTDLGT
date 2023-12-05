@@ -1,5 +1,4 @@
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class RatingManagement {
     private ArrayList<Rating> ratings;
@@ -122,16 +121,15 @@ public class RatingManagement {
     // Requirement 3
     public ArrayList<User> findUsersHavingSameRatingWithUser(int userId, int movieId) {
         ArrayList<User> result = new ArrayList<>();
+        int userRating = -1;
 
         // Find the rating given by the user with userId for the specified movieId
-        int userRating = -1;
         for (Rating r : ratings) {
             if (r.getViewerId() == userId && r.getMovieId() == movieId) {
                 userRating = r.getRatingStar();
                 break;
             }
         }
-
         // If userRating is -1, it means the user hasn't rated the specified movieId
         if (userRating != -1) {
             // Find users who rated the same movie with the same number of stars
@@ -140,11 +138,10 @@ public class RatingManagement {
                         r.getRatingStar() == userRating &&
                         r.getViewerId() != userId) {
                     int viewerId = r.getViewerId();
-                    for (User user : users) {
-                        if (user.getId() == viewerId) {
-                            result.add(user);
-                            break;
-                        }
+                    User user = findUserById(viewerId);
+
+                    if (user.getId() == viewerId) {
+                        result.add(user);
                     }
                 }
             }
@@ -155,7 +152,6 @@ public class RatingManagement {
     // Requirement 4
     public ArrayList<String> findMoviesNameHavingSameReputation() {
         ArrayList<String> result = new ArrayList<>();
-
         // Count the number of ratings greater than 3 for each movie (favored)
         // dung Map de tim kiem cac key (hieu qua hon ArrayList)
         Map<Integer, Integer> movieRatingCount = new HashMap<>();
@@ -178,7 +174,7 @@ public class RatingManagement {
                 }
             }
         }
-        result.sort(Comparator.naturalOrder());
+        Collections.sort(result);
         return result;
     }
 
@@ -190,9 +186,7 @@ public class RatingManagement {
     public ArrayList<String> findMoviesMatchOccupationAndGender(String occupation, String gender, int k,
             int rating) {
         ArrayList<String> result = new ArrayList<>();
-
         // Find users with the same occupation and gender
-        // Iterate through ratings and match criteria
         for (Rating r : ratings) {
             if (r.getRatingStar() == rating) {
                 User user = findUserById(r.getViewerId());
@@ -204,14 +198,8 @@ public class RatingManagement {
                 }
             }
         }
-
-        // Remove duplicates
         ArrayList<String> distinctResult = new ArrayList<>(new HashSet<>(result));
-
-        // Sort alphabetically
         Collections.sort(distinctResult);
-
-        // Limit to k results
         if (distinctResult.size() > k) {
             return new ArrayList<>(distinctResult.subList(0, k));
         } else {
@@ -226,7 +214,6 @@ public class RatingManagement {
     // ket qua phai dc sap xep theo alphabetically
     public ArrayList<String> findMoviesByOccupationAndLessThanRating(String occupation, int k, int rating) {
         List<String> result = new ArrayList<>();
-
         // Iterate through ratings and match criteria
         for (Rating r : ratings) {
             if (r.getRatingStar() < rating) {
@@ -239,14 +226,8 @@ public class RatingManagement {
                 }
             }
         }
-
-        // Remove duplicates
         ArrayList<String> distinctResult = new ArrayList<>(new HashSet<>(result));
-
-        // Sort alphabetically
         Collections.sort(distinctResult);
-
-        // Limit to k results
         if (distinctResult.size() > k) {
             return new ArrayList<>(distinctResult.subList(0, k));
         } else {
@@ -269,11 +250,9 @@ public class RatingManagement {
         Movie latestMovie = findLatestMovieReviewedByUser(userId, rating);
 
         if (latestMovie == null) {
-            return new ArrayList<>(); // No latest movie found
+            return new ArrayList<>();
         }
-
         Set<String> genresOfLatestMovie = new HashSet<>(latestMovie.getGenres());
-
         // Iterate through ratings and match criteria
         for (Rating r : ratings) {
             if (r.getRatingStar() >= rating) {
@@ -287,14 +266,8 @@ public class RatingManagement {
                 }
             }
         }
-
-        // Remove duplicates
         ArrayList<String> distinctResult = new ArrayList<>(new HashSet<>(result));
-
-        // Sort alphabetically
         Collections.sort(distinctResult);
-
-        // Limit to k results
         if (distinctResult.size() > k) {
             return new ArrayList<>(distinctResult.subList(0, k));
         } else {
