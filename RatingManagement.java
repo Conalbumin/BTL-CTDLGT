@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class RatingManagement {
     private ArrayList<Rating> ratings;
@@ -191,42 +192,31 @@ public class RatingManagement {
         ArrayList<String> result = new ArrayList<>();
 
         // Find users with the same occupation and gender
-        ArrayList<Integer> matchingUserIds = new ArrayList<>();
-        for (User user : users) {
-            if (user.getOccupation().equalsIgnoreCase(occupation) && user.getGender().equalsIgnoreCase(gender)) {
-                matchingUserIds.add(user.getId());
-            }
-        }
-
-        // Count the number of ratings for each movie by users with the same occupation
-        // and gender
-        Map<Integer, Integer> movieRatingCount = new HashMap<>();
+        // Iterate through ratings and match criteria
         for (Rating r : ratings) {
-            if (matchingUserIds.contains(r.getViewerId()) && r.getRatingStar() == rating) {
-                movieRatingCount.put(r.getMovieId(), movieRatingCount.getOrDefault(r.getMovieId(), 0) + 1);
-            }
-        }
-        // Collect up to k movies with the highest ratings
-        List<Map.Entry<Integer, Integer>> sortedMovies = new ArrayList<>(movieRatingCount.entrySet());
-        sortedMovies.sort((entry1, entry2) -> entry2.getValue().compareTo(entry1.getValue()));
-
-        int count = 0;
-        for (Map.Entry<Integer, Integer> entry : sortedMovies) {
-            if (count >= k) {
-                break; // Exit loop after collecting k movies
-            }
-            int movieId = entry.getKey();
-            // Find the movie with the corresponding movieId
-            for (Movie movie : movies) {
-                if (movie.getId() == movieId) {
-                    result.add(movie.getName());
-                    count++;
-                    break;
+            if (r.getRatingStar() == rating) {
+                User user = findUserById(r.getViewerId());
+                if (user != null && user.getOccupation().equals(occupation) && user.getGender().equals(gender)) {
+                    Movie movie = findMovieById(r.getMovieId());
+                    if (movie != null) {
+                        result.add(movie.getName());
+                    }
                 }
             }
         }
-        result.sort(Comparator.naturalOrder());
-        return result;
+
+        // Remove duplicates
+        ArrayList<String> distinctResult = new ArrayList<>(new HashSet<>(result));
+
+        // Sort alphabetically
+        Collections.sort(distinctResult);
+
+        // Limit to k results
+        if (distinctResult.size() > k) {
+            return new ArrayList<>(distinctResult.subList(0, k));
+        } else {
+            return distinctResult;
+        }
     }
 
     // @Requirement 6
@@ -235,8 +225,34 @@ public class RatingManagement {
     // danh gia thap hon diem danh gia
     // ket qua phai dc sap xep theo alphabetically
     public ArrayList<String> findMoviesByOccupationAndLessThanRating(String occupation, int k, int rating) {
-        /* code here */
-        return null; /* change here */
+        List<String> result = new ArrayList<>();
+
+        // Iterate through ratings and match criteria
+        for (Rating r : ratings) {
+            if (r.getRatingStar() < rating) {
+                User user = findUserById(r.getViewerId());
+                if (user != null && user.getOccupation().equals(occupation)) {
+                    Movie movie = findMovieById(r.getMovieId());
+                    if (movie != null) {
+                        result.add(movie.getName());
+                    }
+                }
+            }
+        }
+
+        // Remove duplicates
+        ArrayList<String> distinctResult = new ArrayList<>(new HashSet<>(result));
+
+        // Sort alphabetically
+        Collections.sort(distinctResult);
+
+        // Limit to k results
+        if (distinctResult.size() > k) {
+            return new ArrayList<>(distinctResult.subList(0, k));
+        } else {
+            return distinctResult;
+        }
+
     }
 
     // @Requirement 7
@@ -248,7 +264,85 @@ public class RatingManagement {
     // (thoi gian cuoi cung dc xem xet theo thuoc tinh timestamp)
     // ma diem danh gia cua no >= rating
     public ArrayList<String> findMoviesMatchLatestMovieOf(int userId, int rating, int k) {
-        /* code here */
-        return null; /* change here */
+        List<String> result = new ArrayList<>();
+        String userGender = findUserById(userId).getGender();
+        Movie latestMovie = findLatestMovieReviewedByUser(userId, rating);
+
+        if (latestMovie == null) {
+            return new ArrayList<>(); // No latest movie found
+        }
+
+        Set<String> genresOfLatestMovie = new HashSet<>(latestMovie.getGenres());
+
+        // Iterate through ratings and match criteria
+        for (Rating r : ratings) {
+            if (r.getRatingStar() >= rating) {
+                User user = findUserById(r.getViewerId());
+                if (user != null && user.getGender().equals(userGender)) {
+                    Movie movie = findMovieById(r.getMovieId());
+                    if (movie != null && movie.getId() != latestMovie.getId()
+                            && sameGenres(movie, genresOfLatestMovie)) {
+                        result.add(movie.getName());
+                    }
+                }
+            }
+        }
+
+        // Remove duplicates
+        ArrayList<String> distinctResult = new ArrayList<>(new HashSet<>(result));
+
+        // Sort alphabetically
+        Collections.sort(distinctResult);
+
+        // Limit to k results
+        if (distinctResult.size() > k) {
+            return new ArrayList<>(distinctResult.subList(0, k));
+        } else {
+            return distinctResult;
+        }
+    }
+
+    // Helper method to find a user by their ID
+    private User findUserById(int userId) {
+        for (User user : users) {
+            if (user.getId() == userId) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    // Helper method to find a movie by its ID
+    private Movie findMovieById(int movieId) {
+        for (Movie movie : movies) {
+            if (movie.getId() == movieId) {
+                return movie;
+            }
+        }
+        return null;
+    }
+
+    // Helper method to find the latest movie reviewed by a user
+    private Movie findLatestMovieReviewedByUser(int userId, int rating) {
+        Rating latestRating = null;
+        for (Rating r : ratings) {
+            if (r.getViewerId() == userId && r.getRatingStar() >= rating) {
+                if (latestRating == null || r.getTimestamp() > latestRating.getTimestamp()) {
+                    latestRating = r;
+                }
+            }
+        }
+        return latestRating != null ? findMovieById(latestRating.getMovieId()) : null;
+    }
+
+    // Helper method to check if a movie shares at least one genre with a set of
+    // genres
+    private boolean sameGenres(Movie movie, Set<String> genres) {
+        for (String genre : movie.getGenres()) {
+            if (genres.contains(genre)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
